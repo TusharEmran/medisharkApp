@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import StudyPacksCard from '../../components/StudyPacksCard';
 import { Colors } from '../../constants/theme';
+import { useTheme } from '../theme/ThemeContext';
 
 // Temporary dummy submodules; later can be replaced with API (getCourseLessons)
 const DUMMY_SUBMODULES = [
@@ -28,19 +29,21 @@ const SubmodulePacks: React.FC = () => {
   const router = useRouter();
   const params = useLocalSearchParams<{ title?: string }>();
   const courseTitle = params.title ?? 'Submodules';
+  const { isDarkMode } = useTheme();
+  const palette = isDarkMode ? Colors.dark : Colors.light;
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.light.background }]}> 
+    <View style={[styles.container, { backgroundColor: palette.background }]}> 
       <View style={styles.headerRow}>
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.backButton}
           activeOpacity={0.7}
         >
-          <Ionicons name="chevron-back" size={22} color={Colors.light.surfaceDarkText} />
+          <Ionicons name="chevron-back" size={22} color={palette.surfaceDarkText} />
         </TouchableOpacity>
 
-        <Text style={styles.heading} numberOfLines={1}>
+        <Text style={[styles.heading, { color: palette.surfaceDarkText }]} numberOfLines={1}>
           {courseTitle}
         </Text>
 

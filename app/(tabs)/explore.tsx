@@ -123,7 +123,7 @@ export default function ExploreScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.light.background },
+  container: { flex: 1 },
 
   header: {
     paddingTop: 60,

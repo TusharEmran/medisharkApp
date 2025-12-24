@@ -14,13 +14,39 @@ import { useRouter } from "expo-router";
 import { useTheme } from "../theme/ThemeContext";
 import { Lesson } from "../../components/LessonCard";
 import LessonCarousel from "../../components/LessonCarousel";
+import StudyPacksCard from "../../components/StudyPacksCard";
 import { Colors } from "../../constants/theme";
 import { getUserProfile, UserProfile } from "../api/userData.api";
-import { getExamStats, ExamStats, getExamPackSections, ExamPackSection } from "../api/examPackCategory.api";
+import {
+  getExamStats,
+  ExamStats,
+  getExamPackSections,
+  ExamPackSection,
+  getAllCourses,
+  Course,
+} from "../api/examPackCategory.api";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = 380;
 const CARD_SPACING = 0;
+
+const HOME_SUBMODULES = [
+  {
+    id: "sub-1",
+    title: "Chapter-wise MCQ Practice",
+    description: "Practice by chapters with detailed explanations.",
+  },
+  {
+    id: "sub-2",
+    title: "Full Mock Tests",
+    description: "Simulated full-length admission tests.",
+  },
+  {
+    id: "sub-3",
+    title: "Past Year Questions",
+    description: "Previous years question sets for revision.",
+  },
+];
 
 export default function LessonHomeScreen() {
   const [favorites, setFavorites] = useState(new Set<number>());
@@ -28,6 +54,7 @@ export default function LessonHomeScreen() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<ExamStats | null>(null);
   const [examPackSections, setExamPackSections] = useState<ExamPackSection[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const { isDarkMode } = useTheme();
   const palette = isDarkMode ? Colors.dark : Colors.light;
   const router = useRouter();
@@ -63,6 +90,17 @@ export default function LessonHomeScreen() {
     };
 
     loadSections();
+  }, []);
+
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        const data = await getAllCourses();
+        setCourses(data);
+      } catch (e) { }
+    };
+
+    loadCourses();
   }, []);
 
   const lessons = [
@@ -155,6 +193,26 @@ export default function LessonHomeScreen() {
     (s) => s.key !== "popular" && s.enabled
   );
 
+  const trimmedQuery = searchQuery.trim().toLowerCase();
+  const packResults = trimmedQuery.length
+    ? courses.filter((course) =>
+      course.title.toLowerCase().includes(trimmedQuery) ||
+      course.description.toLowerCase().includes(trimmedQuery) ||
+      course.category.toLowerCase().includes(trimmedQuery)
+    )
+    : [];
+
+  const submoduleResults = trimmedQuery.length
+    ? HOME_SUBMODULES.filter((sub) => {
+      const title = sub.title.toLowerCase();
+      const desc = sub.description.toLowerCase();
+      return (
+        title.includes(trimmedQuery) ||
+        desc.includes(trimmedQuery)
+      );
+    })
+    : [];
+
   const handlePressLesson = (lesson: Lesson) => {
     // Navigate to full-screen CourseOverview-style screen instead of overlay
     router.push({
@@ -221,11 +279,85 @@ export default function LessonHomeScreen() {
               placeholderTextColor={palette.iconMuted}
             />
           </View>
-          <TouchableOpacity style={[styles.filterButton, { backgroundColor: palette.primary }]}>
+          <TouchableOpacity
+            style={[styles.filterButton, { backgroundColor: palette.primary }]}
+            onPress={() => {
+              // Open All Exam Packs screen where user can browse all exams using StudyPacksCard
+              router.push("/lesssonPacks/AllExamPacks");
+            }}
+          >
             <Ionicons name="options-outline" size={24} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
+
+      {packResults.length + submoduleResults.length > 0 && (
+        <View style={styles.searchOverlayRoot}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={[
+              styles.searchOverlayBackdrop,
+              {
+                // Start dimming below the header/search area only
+                top: 120,
+                backgroundColor: isDarkMode ? "#000" : "#fff",
+              },
+            ]}
+            onPress={() => {
+              // Dismiss overlay by clearing the search query
+              setSearchQuery("");
+            }}
+          />
+
+          <View
+            style={[
+              styles.searchOverlayContent,
+              { backgroundColor: palette.cardBackground },
+            ]}
+          >
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              style={styles.searchResultsScroll}
+              showsVerticalScrollIndicator={false}
+            >
+              {packResults.map((course) => (
+                <StudyPacksCard
+                  key={course.id}
+                  title={course.title}
+                  subtitle={course.description}
+                  meta={`${course.totalLessons} lessons  ${course.progress}% complete`}
+                  thumbnail={course.thumbnail}
+                  onPress={() => {
+                    router.push({
+                      pathname: "/lesssonPacks/SubmodulePacks",
+                      params: { title: course.title },
+                    });
+                  }}
+                />
+              ))}
+
+              {submoduleResults.map((sub) => (
+                <StudyPacksCard
+                  key={sub.id}
+                  title={sub.title}
+                  subtitle={sub.description}
+                  meta={"12 lessons  3h 20min"}
+                  thumbnail="medisharkcourse.webp"
+                  onPress={() => {
+                    router.push({
+                      pathname: "/lesssonPacks/SubmoduleDetail",
+                      params: {
+                        title: sub.title,
+                        description: sub.description,
+                      },
+                    });
+                  }}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      )}
 
       {/* Top Picks Section */}
       <View style={styles.topPicksSection}>
@@ -339,7 +471,6 @@ export default function LessonHomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   containerDark: {
     backgroundColor: Colors.dark.background,
@@ -417,6 +548,29 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: Colors.light.surfaceDarkText,
+  },
+  searchOverlayRoot: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "flex-start",
+    alignItems: "center",
+    marginTop: 50,
+    zIndex: 100,
+    height: "100%",
+  },
+  searchOverlayBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  searchOverlayContent: {
+    // Align with the backdrop top so content also starts below header/search
+    marginTop: 120,
+    width: "94%",
+    borderRadius: 18,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    maxHeight: 480,
+  },
+  searchResultsScroll: {
+    paddingHorizontal: 2,
   },
   filterButton: {
     width: 50,

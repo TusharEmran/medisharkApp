@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Slot, Stack } from 'expo-router';
 import * as ExpoSplashScreen from 'expo-splash-screen';
 import { AppState, AppStateStatus } from 'react-native';
-import { ThemeProvider } from './theme/ThemeContext';
+import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import AnimatedSplash from './splash';
 
 export default function RootLayout() {
@@ -13,8 +13,6 @@ export default function RootLayout() {
     useEffect(() => {
         // Prevent the native splash from auto-hiding so our animated splash can run
         ExpoSplashScreen.preventAutoHideAsync().catch(() => { });
-
-        // Handle app state changes to detect when app resumes from background
         const subscription = AppState.addEventListener('change', handleAppStateChange);
 
         return () => {
@@ -23,17 +21,14 @@ export default function RootLayout() {
     }, []);
 
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-        // Mark that app state has changed (fresh start to background or resume from background)
         setAppStateChanged(true);
         appState.current = nextAppState;
     };
 
     const handleFinish = async () => {
         try {
-            // hide the native splash and then stop showing the animated splash
             await ExpoSplashScreen.hideAsync();
         } catch (e) {
-            // ignore
         }
         setShowSplash(false);
     };
@@ -43,17 +38,34 @@ export default function RootLayout() {
             {showSplash && !appStateChanged ? (
                 <AnimatedSplash onFinish={handleFinish} />
             ) : (
-                <Stack
-                    screenOptions={{
-                        animation: 'slide_from_right',
-                        headerShown: false,
-                    }}
-                >
-                    <Stack.Screen name="(tabs)" />
-                    <Stack.Screen name="lesssonPacks/SubmodulePacks" />
-                    <Stack.Screen name="lesssonPacks/SubmoduleDetail" />
-                </Stack>
+                <ThemedStack />
             )}
         </ThemeProvider>
+    );
+}
+
+function ThemedStack() {
+    const { isDarkMode } = useTheme();
+
+    return (
+        <Stack
+            screenOptions={{
+                animation: 'slide_from_right',
+                headerShown: false,
+                contentStyle: {
+                    backgroundColor: isDarkMode ? '#020617' : '#ffffff',
+                },
+            }}
+        >
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+                name="lesssonPacks/AllExamPacks"
+                options={{
+                    animation: 'none',
+                }}
+            />
+            <Stack.Screen name="lesssonPacks/SubmodulePacks" />
+            <Stack.Screen name="lesssonPacks/SubmoduleDetail" />
+        </Stack>
     );
 }

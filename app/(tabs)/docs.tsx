@@ -177,10 +177,9 @@ export default function QuestionBankScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   containerDark: {
-    backgroundColor: Colors.dark.background,
+    // kept for compatibility but actual background is controlled via palette.background
   },
   contentContainer: {
     paddingHorizontal: 20,

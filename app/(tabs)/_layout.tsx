@@ -33,7 +33,7 @@ export default function TabLayout() {
       <ThemedTabs />
       {showSplashOnResume && (
         <View style={StyleSheet.absoluteFill}>
-          <SplashScreen onFinish={() => setShowSplashOnResume(false)}  />
+          <SplashScreen onFinish={() => setShowSplashOnResume(false)} />
         </View>
       )}
     </>
@@ -83,7 +83,7 @@ function ThemedTabs() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "home" : "home-outline"}
-              size={26}
+              size={24}
               color={color}
             />
           ),
@@ -97,7 +97,7 @@ function ThemedTabs() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "school" : "school-outline"}
-              size={26}
+              size={24}
               color={color}
             />
           ),
@@ -111,7 +111,7 @@ function ThemedTabs() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "document-text" : "document-text-outline"}
-              size={26}
+              size={24}
               color={color}
             />
           ),
@@ -125,7 +125,7 @@ function ThemedTabs() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "person" : "person-outline"}
-              size={26}
+              size={24}
               color={color}
             />
           ),
@@ -135,7 +135,7 @@ function ThemedTabs() {
   );
 }
 
-const TAB_HEIGHT = 72;
+const TAB_HEIGHT = 64;
 
 const styles = StyleSheet.create({
   tabBar: {
@@ -145,11 +145,9 @@ const styles = StyleSheet.create({
     right: 20,
 
     height: TAB_HEIGHT,
-    borderRadius: TAB_HEIGHT / 2,
 
     backgroundColor: Platform.OS === "ios" ? "rgba(255, 255, 255, 0.7)" : "#FFFFFF",
     borderTopWidth: 0,
-
     paddingBottom: 0,
     paddingTop: 0,
     paddingHorizontal: 0,
@@ -168,7 +166,7 @@ const styles = StyleSheet.create({
   tabBarItem: {
     height: TAB_HEIGHT,
     paddingBottom: 0,
-    paddingTop: 18,
+    paddingTop: 15,
     justifyContent: "center",
     alignItems: "center",
   },
