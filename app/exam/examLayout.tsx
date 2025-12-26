@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  TextInput,
   Dimensions,
   Modal,
   Animated,
@@ -21,14 +20,13 @@ import ExamExitConfirmModal from '../../components/ui/ExamExitConfirmModal';
 import { useTheme } from '../theme/ThemeContext';
 import { Colors } from '../../constants/theme';
 
-type QuestionType = 'single' | 'multiple' | 'text';
+type QuestionType = 'single' | 'multiple';
 
 type Question = {
   id: number;
   text: string;
   type: QuestionType;
   options?: string[];
-  wordLimit?: number;
 };
 
 type ExamData = {
@@ -39,14 +37,14 @@ type ExamData = {
   questions: Question[];
 };
 
-type AnswerValue = number | number[] | string;
+type AnswerValue = number | number[];
 
 type AnswersState = Record<number, AnswerValue>;
 
 const EXAM_DATA: ExamData = {
   title: 'React Native Certification Exam',
   duration: 60,
-  totalQuestions: 15,
+  totalQuestions: 4,
   passingScore: 70,
   questions: [
     {
@@ -68,12 +66,6 @@ const EXAM_DATA: ExamData = {
     },
     {
       id: 3,
-      text: "Explain the difference between 'margin' and 'padding' in React Native styling.",
-      type: 'text',
-      wordLimit: 100,
-    },
-    {
-      id: 4,
       text: "What does the 'flex' property determine in React Native layouts?",
       options: [
         'A. Text font size',
@@ -84,7 +76,7 @@ const EXAM_DATA: ExamData = {
       type: 'single',
     },
     {
-      id: 5,
+      id: 4,
       text: 'Which hooks are built into React? (Select all that apply)',
       options: ['A. useState', 'B. useEffect', 'C. useNative', 'D. useCallback', 'E. useStorage'],
       type: 'multiple',
@@ -103,11 +95,9 @@ export default function ExamScreen() {
   const [currentQuestionId, setCurrentQuestionId] = useState<number>(1);
   const [answers, setAnswers] = useState<AnswersState>({});
   const [timeLeft, setTimeLeft] = useState<number>(TOTAL_SECONDS);
-  const [showReview, setShowReview] = useState<boolean>(false);
   const [showSubmit, setShowSubmit] = useState<boolean>(false);
   const [showQuestionsModal, setShowQuestionsModal] = useState<boolean>(false);
   const [showExitModal, setShowExitModal] = useState<boolean>(false);
-  const [wordCount, setWordCount] = useState<number>(0);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -157,7 +147,6 @@ export default function ExamScreen() {
 
   const handleConfirmExit = () => {
     setShowExitModal(false);
-    // Here we conceptually "submit" current answers by leaving the screen.
     router.back();
   };
 
@@ -215,11 +204,11 @@ export default function ExamScreen() {
               </Text>
 
               {status === 'answered' && (
-                <MaterialIcons 
-                  name="check-circle" 
-                  size={12} 
-                  color="#10b981" 
-                  style={s.questionNumberIcon} 
+                <MaterialIcons
+                  name="check-circle"
+                  size={12}
+                  color="#10b981"
+                  style={s.questionNumberIcon}
                 />
               )}
             </TouchableOpacity>
@@ -233,7 +222,7 @@ export default function ExamScreen() {
     return (
       <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false}>
         {questions.map((question) => (
-          <Animated.View 
+          <Animated.View
             key={question.id}
             style={[
               s.questionCard,
@@ -249,20 +238,15 @@ export default function ExamScreen() {
                   s.questionTypeTag,
                   question.type === 'single' && s.questionTypeSingle,
                   question.type === 'multiple' && s.questionTypeMultiple,
-                  question.type === 'text' && s.questionTypeText,
                 ]}
               >
-                <Text style={[s.questionTypeTagText, { color: palette.text }] }>
+                <Text style={[s.questionTypeTagText, { color: palette.text }]}>
                   {question.type.charAt(0).toUpperCase() + question.type.slice(1)}
                 </Text>
               </View>
             </View>
 
             <Text style={[s.questionCardText, { color: palette.surfaceDarkText }]}>{question.text}</Text>
-
-            {/* ------------------------------------------------------ */}
-            {/* SINGLE TYPE (LOCKED) */}
-            {/* ------------------------------------------------------ */}
             {question.type === 'single' && question.options && (
               <View style={s.optionsContainer}>
                 {question.options.map((op, i) => (
@@ -274,10 +258,8 @@ export default function ExamScreen() {
                       answers[question.id] === i && { backgroundColor: palette.primary, borderColor: palette.primary }
                     ]}
                     onPress={() => {
-                      // ❌ Prevent changing answer after first selection
                       if (answers[question.id] !== undefined) return;
 
-                      // ✅ Allow ONLY first choice
                       handleSelect(question.id, i);
                     }}
                   >
@@ -331,31 +313,6 @@ export default function ExamScreen() {
               </View>
             )}
 
-            {/* TEXT TYPE */}
-            {question.type === 'text' && (
-              <>
-                <TextInput
-                  style={[s.textBox, { backgroundColor: palette.cardBackgroundSoft, borderColor: palette.borderSubtle, color: palette.surfaceDarkText }]}
-                  multiline
-                  value={(answers[question.id] as string) || ''}
-                  placeholder="Type your answer here..."
-                  onChangeText={(t) => {
-                    handleSelect(question.id, t);
-                    setWordCount(
-                      t.split(/\s+/).filter(word => word.length > 0).length
-                    );
-                  }}
-                  maxLength={question.wordLimit ? question.wordLimit * 10 : 1000}
-                />
-                <View style={s.wordLimitContainer}>
-                  <Text style={[s.wordLimitText, { color: palette.mutedText }] }>
-                    Words: {wordCount}
-                    {question.wordLimit ? ` / ${question.wordLimit}` : ''}
-                  </Text>
-                </View>
-              </>
-            )}
-
             <View style={s.questionDivider} />
           </Animated.View>
         ))}
@@ -364,11 +321,11 @@ export default function ExamScreen() {
   };
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={[s.container, { backgroundColor: palette.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <SafeAreaView style={[s.container, { backgroundColor: palette.background }] }>
+      <SafeAreaView style={[s.container, { backgroundColor: palette.background }]}>
         <StatusBar barStyle="light-content" backgroundColor={palette.tabBackground} />
 
         {/* HEADER */}
@@ -377,12 +334,12 @@ export default function ExamScreen() {
             <Text style={[s.title, { color: palette.surfaceDarkText }]} numberOfLines={2}>{EXAM_DATA.title}</Text>
 
             <View style={s.headerRight}>
-              <View style={[s.timerContainer, { backgroundColor: palette.cardBackgroundSoft }] }>
+              <View style={[s.timerContainer, { backgroundColor: palette.cardBackgroundSoft }]}>
                 <MaterialIcons name="access-time" size={18} color={palette.mutedText} />
                 <Text style={[s.timer, { color: palette.mutedText }]}>{formatTime(timeLeft)}</Text>
               </View>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={s.menuBtn}
                 onPress={() => setShowQuestionsModal(true)}
               >
@@ -393,101 +350,26 @@ export default function ExamScreen() {
 
           <View style={s.progressContainer}>
             <View style={s.progressBar}>
-              <View 
+              <View
                 style={[
-                  s.progressFill, 
+                  s.progressFill,
                   { width: `${(Object.keys(answers).length / questions.length) * 100}%` }
-                ]} 
+                ]}
               />
             </View>
 
             <View style={s.progressInfo}>
-              <Text style={[s.progressText, { color: palette.mutedText }] }>
+              <Text style={[s.progressText, { color: palette.mutedText }]}>
                 {Object.keys(answers).length} / {questions.length} answered
               </Text>
 
-              <TouchableOpacity 
-                style={s.reviewBtn}
-                onPress={() => setShowReview(!showReview)}
-              >
-                <Text style={[s.reviewBtnText, { color: palette.mutedText }] }>
-                  {showReview ? 'Hide' : 'Show'} Review
-                </Text>
-              </TouchableOpacity>
             </View>
           </View>
         </View>
 
-        {/* TOP REVIEW GRID */}
-        {showReview && (
-          <View style={[s.questionsBanner, { backgroundColor: palette.cardBackground }] }>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={s.questionsBannerContent}
-            >
-              {renderQuestionNumberGrid()}
-            </ScrollView>
-          </View>
-        )}
 
         {/* MAIN CONTENT */}
         {renderAllQuestions()}
-
-        {/* BOTTOM NAV */}
-        <View style={[s.bottomNav, { backgroundColor: palette.cardBackground }] }>
-          <TouchableOpacity
-            disabled={currentQuestionId === 1}
-            style={[
-              s.bottomNavBtn,
-              currentQuestionId === 1 && s.bottomNavBtnDisabled
-            ]}
-            onPress={() => scrollToQuestion(currentQuestionId - 1)}
-          >
-            <MaterialIcons 
-              name="arrow-back" 
-              size={20} 
-              color={currentQuestionId === 1 ? "#94a3b8" : "white"} 
-            />
-            <Text style={[
-              s.bottomNavBtnText,
-              currentQuestionId === 1 && s.bottomNavBtnTextDisabled
-            ]}>
-              Previous
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={s.questionsToggleBtn}
-            onPress={() => setShowQuestionsModal(true)}
-          >
-            <MaterialIcons name="grid-view" size={20} color="#0f1724" />
-            <Text style={[s.questionsToggleText, { color: palette.mutedText }] }>
-              Q{currentQuestionId} of {questions.length}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            disabled={currentQuestionId === questions.length}
-            style={[
-              s.bottomNavBtn,
-              currentQuestionId === questions.length && s.bottomNavBtnDisabled
-            ]}
-            onPress={() => scrollToQuestion(currentQuestionId + 1)}
-          >
-            <Text style={[
-              s.bottomNavBtnText,
-              currentQuestionId === questions.length && s.bottomNavBtnTextDisabled
-            ]}>
-              Next
-            </Text>
-            <MaterialIcons 
-              name="arrow-forward" 
-              size={20} 
-              color={currentQuestionId === questions.length ? "#94a3b8" : "white"} 
-            />
-          </TouchableOpacity>
-        </View>
 
         {/* SUBMIT BUTTON */}
         <TouchableOpacity
@@ -514,7 +396,7 @@ export default function ExamScreen() {
             <View style={s.modalContent}>
               <View style={s.modalHeader}>
                 <Text style={s.modalTitle}>All Questions</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => setShowQuestionsModal(false)}
                   style={s.modalCloseBtn}
                 >
@@ -551,11 +433,11 @@ export default function ExamScreen() {
 }
 
 const s = StyleSheet.create({
-  container: { 
+  container: {
     flex: 1,
     backgroundColor: Colors.light.background,
   },
-  header: { 
+  header: {
     backgroundColor: Colors.light.tabBackground,
     paddingHorizontal: 16,
     paddingTop: 40,
@@ -567,9 +449,9 @@ const s = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  title: { 
-    color: 'white', 
-    fontSize: 18, 
+  title: {
+    color: 'white',
+    fontSize: 18,
     fontWeight: '700',
     flex: 1,
     marginRight: 12,
@@ -587,7 +469,7 @@ const s = StyleSheet.create({
     borderRadius: 20,
     marginRight: 12,
   },
-  timer: { 
+  timer: {
     color: Colors.light.mutedText,
     marginLeft: 6,
     fontWeight: '600',
@@ -716,24 +598,15 @@ const s = StyleSheet.create({
   questionTypeMultiple: {
     backgroundColor: Colors.light.accentEmeraldSoft,
   },
-  questionTypeText: {
-    backgroundColor: Colors.light.primarySoft,
-  },
   questionTypeTagText: {
     fontSize: 11,
     fontWeight: '600',
     color: Colors.light.subtleText,
   },
-  questionTypeTagTextMultiple: {
-    color: Colors.light.warning,
-  },
-  questionTypeTagTextText: {
-    color: Colors.light.subtleText,
-  },
-  questionCardText: { 
-    fontSize: 16, 
-    fontWeight: '500', 
-    marginBottom: 20, 
+  questionCardText: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 20,
     color: Colors.light.surfaceDarkText,
     lineHeight: 24,
   },
@@ -784,65 +657,15 @@ const s = StyleSheet.create({
     backgroundColor: Colors.light.icon,
     borderColor: Colors.light.icon,
   },
-  optionCardText: { 
+  optionCardText: {
     color: Colors.light.surfaceDarkText,
     fontSize: 14,
     flex: 1,
-  },
-  textBox: {
-    minHeight: 120,
-    backgroundColor: Colors.light.cardBackgroundSoft,
-    padding: 16,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.light.borderSubtle,
-    fontSize: 14,
-    color: Colors.light.surfaceDarkText,
-    textAlignVertical: 'top',
-    marginBottom: 8,
-  },
-  wordLimitContainer: {
-    alignSelf: 'flex-end',
-  },
-  wordLimitText: {
-    fontSize: 12,
-    color: Colors.light.mutedText,
   },
   questionDivider: {
     height: 1,
     backgroundColor: Colors.light.borderSubtle,
     marginTop: 20,
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: Colors.light.cardBackground,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.light.borderSubtle,
-  },
-  bottomNavBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    backgroundColor: Colors.light.primaryMuted,
-    borderRadius: 10,
-    minWidth: 100,
-    justifyContent: 'center',
-  },
-  bottomNavBtnDisabled: {
-    backgroundColor: Colors.light.cardBackgroundSoft,
-  },
-  bottomNavBtnText: {
-    color: 'white',
-    fontWeight: '600',
-    marginHorizontal: 6,
-  },
-  bottomNavBtnTextDisabled: {
-    color: Colors.light.mutedText,
   },
   questionsToggleBtn: {
     flexDirection: 'row',

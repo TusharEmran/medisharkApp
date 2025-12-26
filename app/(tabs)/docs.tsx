@@ -65,7 +65,7 @@ export default function QuestionBankScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: palette.background }]}>      
+    <View style={[styles.container, { backgroundColor: palette.background }]}>
       <ScrollView
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
@@ -148,7 +148,7 @@ export default function QuestionBankScreen() {
                 // passing the course title for the header
                 router.push({
                   pathname: '/lesssonPacks/SubmodulePacks',
-                  params: { title: course.title },
+                  params: { title: course.title, progress: String(course.progress) },
                 });
               }}
               onToggleFavorite={() => toggleFavorite(course.id)}
@@ -168,6 +168,7 @@ export default function QuestionBankScreen() {
           isFavorite={favorites.has(selectedBank.id)}
           onToggleFavorite={() => toggleFavorite(selectedBank.id)}
           onClose={() => setShowOverview(false)}
+          bannerImageSource={require('../../assets/images/medisharkcourse.webp')}
         />
       )}
     </View>

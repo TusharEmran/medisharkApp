@@ -35,7 +35,7 @@ const AllExamPacks: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: palette.background }]}>      
+    <View style={[styles.container, { backgroundColor: palette.background }]}>
       <View style={styles.headerRow}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -70,7 +70,7 @@ const AllExamPacks: React.FC = () => {
               onPress={() => {
                 router.push({
                   pathname: '/lesssonPacks/SubmodulePacks',
-                  params: { title: course.title },
+                  params: { title: course.title, progress: String(course.progress) },
                 });
               }}
               onToggleFavorite={() => toggleFavorite(course.id)}

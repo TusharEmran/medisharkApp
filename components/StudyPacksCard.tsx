@@ -10,6 +10,7 @@ export type StudyPacksCardProps = {
   meta: string;
   thumbnail: string;
   isFavorite?: boolean;
+  progressPercent?: number; // 0..100, renders a progress bar instead of meta text
   onPress?: () => void;
   onToggleFavorite?: () => void;
 };
@@ -20,11 +21,16 @@ export const StudyPacksCard: React.FC<StudyPacksCardProps> = ({
   meta,
   thumbnail,
   isFavorite = false,
+  progressPercent,
   onPress,
   onToggleFavorite,
 }) => {
   const { isDarkMode } = useTheme();
   const palette = isDarkMode ? Colors.dark : Colors.light;
+  const clampedProgress =
+    typeof progressPercent === 'number'
+      ? Math.max(0, Math.min(100, progressPercent))
+      : null;
   // Map thumbnail string from API (e.g. 'ug.webp', 'pg.webp', 'gp.webp') to local assets.
   let imageSource: any;
 
@@ -46,8 +52,8 @@ export const StudyPacksCard: React.FC<StudyPacksCardProps> = ({
   return (
     <View style={styles.courseCardShadow}>
       <TouchableOpacity activeOpacity={0.9} onPress={onPress}>
-        <View style={[styles.courseCard, { backgroundColor: palette.cardBackground }] }>
-          <View style={[styles.courseIconCircle, { backgroundColor: palette.accentTealSoft }] }>
+        <View style={[styles.courseCard, { backgroundColor: palette.cardBackground }]}>
+          <View style={[styles.courseIconCircle, { backgroundColor: palette.accentTealSoft }]}>
             <Image
               source={imageSource}
               style={styles.courseImage}
@@ -68,12 +74,31 @@ export const StudyPacksCard: React.FC<StudyPacksCardProps> = ({
             >
               {subtitle}
             </Text>
-            <Text
-              style={[styles.courseEnrolledOn, { color: palette.mutedText }]}
-              numberOfLines={1}
-            >
-              {meta}
-            </Text>
+            {clampedProgress !== null ? (
+              <View style={styles.progressWrap}>
+                <Text style={[styles.progressText, { color: palette.mutedText }]} numberOfLines={1}>
+                  {`${Math.round(clampedProgress)}% completed`}
+                </Text>
+                <View style={[styles.progressTrack, { backgroundColor: palette.cardBackgroundSoft }]}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      {
+                        backgroundColor: palette.primary,
+                        width: `${clampedProgress}%`,
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
+            ) : (
+              <Text
+                style={[styles.courseEnrolledOn, { color: palette.mutedText }]}
+                numberOfLines={1}
+              >
+                {meta}
+              </Text>
+            )}
           </View>
 
           {onToggleFavorite && (
@@ -137,6 +162,23 @@ const styles = StyleSheet.create({
   },
   courseEnrolledOn: {
     fontSize: 12,
+  },
+  progressWrap: {
+    marginTop: 6,
+  },
+  progressText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  progressTrack: {
+    height: 8,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 999,
   },
   favoriteButton: {
     paddingHorizontal: 4,

@@ -39,7 +39,8 @@
             "backgroundColor": "#020617"
           }
         }
-      ]
+      ],
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true,

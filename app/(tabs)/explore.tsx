@@ -2,7 +2,6 @@ import React from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   ScrollView,
   StyleSheet,
 } from 'react-native';
@@ -10,40 +9,24 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../theme/ThemeContext';
 import { Colors } from '../../constants/theme';
+import StudyPacksCard from '../../components/StudyPacksCard';
+import { ROOT_COURSES } from '../lesssonPacks/submoduleData';
 
 export default function ExploreScreen() {
   const router = useRouter();
   const { isDarkMode } = useTheme();
   const palette = isDarkMode ? Colors.dark : Colors.light;
 
-  const enrolledCourses = [
-    {
-      id: 'c1',
-      title: 'Anatomy & Physiology Basics',
-      instructor: 'Dr. Sarah Malik',
-      progress: 64,
-      nextExam: 'Midterm · 24 Dec, 10:00 AM',
-    },
-    {
-      id: 'c2',
-      title: 'Clinical Pharmacology',
-      instructor: 'Prof. Ahmed Khan',
-      progress: 32,
-      nextExam: 'Quiz 3 · 28 Dec, 2:00 PM',
-    },
-    {
-      id: 'c3',
-      title: 'Medical Ethics & Law',
-      instructor: 'Dr. Ayesha Rahman',
-      progress: 80,
-      nextExam: 'Final Exam · 05 Jan, 9:00 AM',
-    },
-  ];
+  const enrolledCourses = ROOT_COURSES;
 
-  // timer
-
-  const handleOpenExams = () => {
-    router.push('/exam/exams');
+  const handleOpenSubmodule = (subId: string, title: string) => {
+    router.push({
+      pathname: '/lesssonPacks/SubmodulePacks',
+      params: {
+        title,
+        parentId: subId,
+      },
+    });
   };
 
   return (
@@ -51,71 +34,25 @@ export default function ExploreScreen() {
       {/* Header */}
       <View style={[styles.header, { backgroundColor: palette.tabBackground }]}>
         <View>
-          <Text style={[styles.headerTitle, { color: palette.surfaceDarkText }]}>Enrolled Courses</Text>
-          <Text style={[styles.headerSubtitle, { color: palette.mutedText }]}>Continue where you left off</Text>
+          <Text style={[styles.headerTitle, { color: palette.surfaceDarkText }]}>Enrolled Exam Packs</Text>
+          <Text style={[styles.headerSubtitle, { color: palette.mutedText }]}>Tap a course to drill into submodules</Text>
         </View>
         <View style={styles.headerIconWrap}>
           <Ionicons name="school" size={24} color={palette.primary} />
         </View>
       </View>
 
-      {/* Questions Scroll */}
+      {/* Enrolled submodules as StudyPacks cards */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {enrolledCourses.map(course => (
-          <View
+        {enrolledCourses.map((course) => (
+          <StudyPacksCard
             key={course.id}
-            style={[styles.questionCard, { backgroundColor: palette.cardBackground }]}
-          >
-            <View style={styles.questionHeader}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.courseTitle, { color: palette.surfaceDarkText }]}>
-                  {course.title}
-                </Text>
-                <Text style={[styles.courseInstructor, { color: palette.mutedText }]}>
-                  {course.instructor}
-                </Text>
-              </View>
-              <View style={styles.progressBadge}>
-                <Ionicons name="time-outline" size={16} color={palette.primary} />
-                <Text style={[styles.progressText, { color: palette.primary }]}>
-                  {course.progress}%
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.courseMetaRow}>
-              <View style={styles.courseMetaItem}>
-                <Ionicons name="calendar-outline" size={16} color={palette.iconMuted} />
-                <Text style={[styles.metaText, { color: palette.subtleText }]}>
-                  {course.nextExam}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.actionsRow}>
-              <TouchableOpacity
-                style={[styles.secondaryButton, { borderColor: palette.borderSubtle }]}
-                activeOpacity={0.9}
-              >
-                <Ionicons name="play-outline" size={18} color={palette.primary} />
-                <Text style={[styles.secondaryButtonText, { color: palette.primary }]}>Continue Course</Text>
-              </TouchableOpacity>
-
-              {/* Submit Button */}
-              <TouchableOpacity
-                style={[styles.submitButton, { backgroundColor: palette.primary }]}
-                onPress={handleOpenExams}
-                activeOpacity={0.9}
-              >
-                <Ionicons name="document-text-outline" size={18} color={palette.accentTealSofter} />
-                <Text
-                  style={[styles.submitButtonText, { color: palette.accentTealSofter }]}
-                >
-                  Exams
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+            title={course.title}
+            subtitle={course.description}
+            meta="Submodules"
+            thumbnail="medisharkcourse.webp"
+            onPress={() => handleOpenSubmodule(course.id, course.title)}
+          />
         ))}
       </ScrollView>
     </View>

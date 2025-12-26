@@ -1,9 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Slot, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import * as ExpoSplashScreen from 'expo-splash-screen';
 import { AppState, AppStateStatus } from 'react-native';
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import AnimatedSplash from './splash';
+import * as SystemUI from 'expo-system-ui';
+import { StatusBar } from 'expo-status-bar';
+import { Colors } from '../constants/theme';
 
 export default function RootLayout() {
     const [showSplash, setShowSplash] = useState(true);
@@ -11,7 +14,6 @@ export default function RootLayout() {
     const appState = useRef(AppState.currentState);
 
     useEffect(() => {
-        // Prevent the native splash from auto-hiding so our animated splash can run
         ExpoSplashScreen.preventAutoHideAsync().catch(() => { });
         const subscription = AppState.addEventListener('change', handleAppStateChange);
 
@@ -35,6 +37,7 @@ export default function RootLayout() {
 
     return (
         <ThemeProvider>
+            <SystemUiThemeBridge />
             {showSplash && !appStateChanged ? (
                 <AnimatedSplash onFinish={handleFinish} />
             ) : (
@@ -44,8 +47,21 @@ export default function RootLayout() {
     );
 }
 
+function SystemUiThemeBridge() {
+    const { isDarkMode } = useTheme();
+    const backgroundColor = isDarkMode ? Colors.dark.background : Colors.light.background;
+
+    useEffect(() => {
+        SystemUI.setBackgroundColorAsync(backgroundColor).catch(() => {
+        });
+    }, [backgroundColor]);
+
+    return <StatusBar style={isDarkMode ? 'light' : 'dark'} backgroundColor={backgroundColor} translucent={false} />;
+}
+
 function ThemedStack() {
     const { isDarkMode } = useTheme();
+    const backgroundColor = isDarkMode ? Colors.dark.background : Colors.light.background;
 
     return (
         <Stack
@@ -53,7 +69,7 @@ function ThemedStack() {
                 animation: 'slide_from_right',
                 headerShown: false,
                 contentStyle: {
-                    backgroundColor: isDarkMode ? '#020617' : '#ffffff',
+                    backgroundColor,
                 },
             }}
         >

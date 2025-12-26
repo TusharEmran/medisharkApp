@@ -14,7 +14,7 @@ import { useRouter } from "expo-router";
 import { useTheme } from "../theme/ThemeContext";
 import { Lesson } from "../../components/LessonCard";
 import LessonCarousel from "../../components/LessonCarousel";
-import StudyPacksCard from "../../components/StudyPacksCard";
+import SearchScreen from "../../components/SearchScreen";
 import { Colors } from "../../constants/theme";
 import { getUserProfile, UserProfile } from "../api/userData.api";
 import {
@@ -29,6 +29,8 @@ import {
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = 380;
 const CARD_SPACING = 0;
+
+const SEARCH_OVERLAY_TOP = 170;
 
 const HOME_SUBMODULES = [
   {
@@ -213,8 +215,10 @@ export default function LessonHomeScreen() {
     })
     : [];
 
+  const isSearchOverlayVisible =
+    trimmedQuery.length > 0 && (packResults.length + submoduleResults.length > 0);
+
   const handlePressLesson = (lesson: Lesson) => {
-    // Navigate to full-screen CourseOverview-style screen instead of overlay
     router.push({
       pathname: "/lesssonPacks/SubmoduleDetail",
       params: {
@@ -236,235 +240,198 @@ export default function LessonHomeScreen() {
   };
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: palette.background }]}
-      contentContainerStyle={styles.contentContainer}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Header */}
-      <View
-        style={[
-          styles.header,
-          { backgroundColor: palette.tabBackground },
-        ]}
+    <View style={[styles.container, { backgroundColor: palette.background }]}>
+      <ScrollView
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+        scrollEnabled={!isSearchOverlayVisible}
+        keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.headerTop}>
-          <View>
-            <Text style={[styles.greeting, isDarkMode && styles.textLight]}>
-              {user ? `Hi, ${user.name.split(" ")[0]}` : "Hi,"}
-            </Text>
-            <Text style={[styles.subtitle, isDarkMode && styles.textMutedDark]}>Find your exams today!</Text>
-          </View>
-          <TouchableOpacity>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{user ? user.initials : "CN"}</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <View style={[styles.searchBar, { backgroundColor: palette.cardBackgroundSoft }]}>
-            <Ionicons
-              name="search"
-              size={20}
-              color="#9ca3af"
-              style={styles.searchIcon}
-            />
-            <TextInput
-              style={[styles.searchInput, { color: palette.surfaceDarkText }]}
-              placeholder="Search exam packs..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor={palette.iconMuted}
-            />
-          </View>
-          <TouchableOpacity
-            style={[styles.filterButton, { backgroundColor: palette.primary }]}
-            onPress={() => {
-              // Open All Exam Packs screen where user can browse all exams using StudyPacksCard
-              router.push("/lesssonPacks/AllExamPacks");
-            }}
-          >
-            <Ionicons name="options-outline" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {packResults.length + submoduleResults.length > 0 && (
-        <View style={styles.searchOverlayRoot}>
-          <TouchableOpacity
-            activeOpacity={1}
-            style={[
-              styles.searchOverlayBackdrop,
-              {
-                // Start dimming below the header/search area only
-                top: 120,
-                backgroundColor: isDarkMode ? "#000" : "#fff",
-              },
-            ]}
-            onPress={() => {
-              // Dismiss overlay by clearing the search query
-              setSearchQuery("");
-            }}
-          />
-
-          <View
-            style={[
-              styles.searchOverlayContent,
-              { backgroundColor: palette.cardBackground },
-            ]}
-          >
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              style={styles.searchResultsScroll}
-              showsVerticalScrollIndicator={false}
-            >
-              {packResults.map((course) => (
-                <StudyPacksCard
-                  key={course.id}
-                  title={course.title}
-                  subtitle={course.description}
-                  meta={`${course.totalLessons} lessons  ${course.progress}% complete`}
-                  thumbnail={course.thumbnail}
-                  onPress={() => {
-                    router.push({
-                      pathname: "/lesssonPacks/SubmodulePacks",
-                      params: { title: course.title },
-                    });
-                  }}
-                />
-              ))}
-
-              {submoduleResults.map((sub) => (
-                <StudyPacksCard
-                  key={sub.id}
-                  title={sub.title}
-                  subtitle={sub.description}
-                  meta={"12 lessons  3h 20min"}
-                  thumbnail="medisharkcourse.webp"
-                  onPress={() => {
-                    router.push({
-                      pathname: "/lesssonPacks/SubmoduleDetail",
-                      params: {
-                        title: sub.title,
-                        description: sub.description,
-                      },
-                    });
-                  }}
-                />
-              ))}
-            </ScrollView>
-          </View>
-        </View>
-      )}
-
-      {/* Top Picks Section */}
-      <View style={styles.topPicksSection}>
+        {/* Header */}
         <View
           style={[
-            styles.topPicksCard,
-            { backgroundColor: palette.accentTealSoft },
+            styles.header,
+            { backgroundColor: palette.tabBackground },
           ]}
         >
-          <View style={styles.topPicksContent}>
-            <Text style={[styles.topPicksLabel, { color: palette.text }]}>Browse All Exam Packs</Text>
-            <View style={styles.lessonCountContainer}>
-              <Text style={[styles.lessonCountNumber, { color: palette.text }]}>
-                {stats ? `${stats.examsCount}+` : "100+"}
+          <View style={styles.headerTop}>
+            <View>
+              <Text style={[styles.greeting, isDarkMode && styles.textLight]}>
+                {user ? `Hi, ${user.name.split(" ")[0]}` : "Hi,"}
               </Text>
-              <Text style={[styles.lessonCountText, { color: palette.text }]}>Exams</Text>
+              <Text style={[styles.subtitle, isDarkMode && styles.textMutedDark]}>Find your exams today!</Text>
+            </View>
+            <TouchableOpacity>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{user ? user.initials : "CN"}</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* Search Bar */}
+          <View style={styles.searchContainer}>
+            <View style={[styles.searchBar, { backgroundColor: palette.cardBackgroundSoft }]}>
+              <Ionicons
+                name="search"
+                size={20}
+                color="#9ca3af"
+                style={styles.searchIcon}
+              />
+              <TextInput
+                style={[styles.searchInput, { color: palette.surfaceDarkText }]}
+                placeholder="Search exam packs..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor={palette.iconMuted}
+              />
             </View>
             <TouchableOpacity
-              style={[styles.exploreButton, { backgroundColor: palette.primary }]}
+              style={[styles.filterButton, { backgroundColor: palette.primary }]}
               onPress={() => {
-                // Go to Explore tab when tapping "Explore Exams"
-                router.push('/(tabs)/explore');
+                router.push("/lesssonPacks/AllExamPacks");
               }}
             >
-              <Text style={[styles.exploreButtonText, { color: palette.accentTealSofter }]}>Explore Exams</Text>
+              <Ionicons name="options-outline" size={24} color="#fff" />
             </TouchableOpacity>
           </View>
+        </View>
 
-          {/* Mini preview cards */}
-          <View style={styles.previewCards}>
-            <View
-              style={[
-                styles.previewCard,
-                { backgroundColor: palette.cardBackground },
-              ]}
-            >
-              <Text style={[styles.previewCardTitle, { color: palette.text }]}>Categories</Text>
-              <View style={styles.previewBadge}>
-                <Text style={[styles.previewBadgeText, { color: palette.primaryMuted }]}>
-                  {stats ? `${stats.categoriesCount}+` : "10+"}
+        {/* Search overlay is rendered above the ScrollView (below) */}
+
+        {/* Top Picks Section */}
+        <View style={styles.topPicksSection}>
+          <View
+            style={[
+              styles.topPicksCard,
+              { backgroundColor: palette.accentTealSoft },
+            ]}
+          >
+            <View style={styles.topPicksContent}>
+              <Text style={[styles.topPicksLabel, { color: palette.text }]}>Browse All Exam Packs</Text>
+              <View style={styles.lessonCountContainer}>
+                <Text style={[styles.lessonCountNumber, { color: palette.text }]}>
+                  {stats ? `${stats.examsCount}+` : "100+"}
                 </Text>
+                <Text style={[styles.lessonCountText, { color: palette.text }]}>Exams</Text>
               </View>
-            </View>
-            <View
-              style={[
-                styles.previewCard,
-                { backgroundColor: palette.cardBackground },
-              ]}
-            >
-              <Text style={[styles.previewCardTitle, { color: palette.text }]}>Lessons</Text>
-              <View style={styles.previewBadge}>
-                <Text style={[styles.previewBadgeText, { color: palette.primaryMuted }]}>
-                  {stats ? `${stats.lessonsCount}+` : "200+"}
-                </Text>
-              </View>
+              <TouchableOpacity
+                style={[styles.exploreButton, { backgroundColor: palette.primary }]}
+                onPress={() => {
+                  // Go to Explore tab when tapping "Explore Exams"
+                  router.push('/(tabs)/explore');
+                }}
+              >
+                <Text style={[styles.exploreButtonText, { color: palette.accentTealSofter }]}>Explore Exams</Text>
+              </TouchableOpacity>
             </View>
 
-          </View>
+            {/* Mini preview cards */}
+            <View style={styles.previewCards}>
+              <View
+                style={[
+                  styles.previewCard,
+                  { backgroundColor: palette.cardBackground },
+                ]}
+              >
+                <Text style={[styles.previewCardTitle, { color: palette.text }]}>Categories</Text>
+                <View style={styles.previewBadge}>
+                  <Text style={[styles.previewBadgeText, { color: palette.primaryMuted }]}>
+                    {stats ? `${stats.categoriesCount}+` : "10+"}
+                  </Text>
+                </View>
+              </View>
+              <View
+                style={[
+                  styles.previewCard,
+                  { backgroundColor: palette.cardBackground },
+                ]}
+              >
+                <Text style={[styles.previewCardTitle, { color: palette.text }]}>Lessons</Text>
+                <View style={styles.previewBadge}>
+                  <Text style={[styles.previewBadgeText, { color: palette.primaryMuted }]}>
+                    {stats ? `${stats.lessonsCount}+` : "200+"}
+                  </Text>
+                </View>
+              </View>
 
-          {/* Decorative elements */}
-          <View style={styles.decorBubble1} />
-          <View style={styles.decorBubble2} />
-        </View>
-      </View>
+            </View>
 
-      {/* Popular Exam Packs Section (configurable) */}
-      {popularSectionConfig && (
-        <View style={styles.popularSection}>
-          <View style={styles.popularHeader}>
-            <Text style={[styles.popularTitle, { color: palette.surfaceDarkText }]}>
-              {popularSectionConfig.title}
-            </Text>
-            <TouchableOpacity>
-              <Text style={[styles.seeAllText, { color: palette.primary }]}>See All</Text>
-            </TouchableOpacity>
+            {/* Decorative elements */}
+            <View style={styles.decorBubble1} />
+            <View style={styles.decorBubble2} />
           </View>
-          <LessonCarousel
-            data={lessons}
-            favorites={favorites}
-            onToggleFavorite={toggleFavorite}
-            onPressLesson={handlePressLesson}
-            autoPlayInterval={2000}
-          />
         </View>
-      )}
 
-      {/* Additional Exam Pack Sections (configurable) */}
-      {otherExamPackSections.map((section) => (
-        <View key={section.id} style={styles.popularSection}>
-          <View style={styles.popularHeader}>
-            <Text style={[styles.popularTitle, { color: palette.surfaceDarkText }]}>
-              {section.title}
-            </Text>
-            <TouchableOpacity>
-              <Text style={[styles.seeAllText, { color: palette.primary }]}>See All</Text>
-            </TouchableOpacity>
+        {/* Popular Exam Packs Section (configurable) */}
+        {popularSectionConfig && (
+          <View style={styles.popularSection}>
+            <View style={styles.popularHeader}>
+              <Text style={[styles.popularTitle, { color: palette.surfaceDarkText }]}>
+                {popularSectionConfig.title}
+              </Text>
+              <TouchableOpacity>
+                <Text style={[styles.seeAllText, { color: palette.primary }]}>See All</Text>
+              </TouchableOpacity>
+            </View>
+            <LessonCarousel
+              data={lessons}
+              favorites={favorites}
+              onToggleFavorite={toggleFavorite}
+              onPressLesson={handlePressLesson}
+              autoPlayInterval={2000}
+            />
           </View>
-          <LessonCarousel
-            data={lessons}
-            favorites={favorites}
-            onToggleFavorite={toggleFavorite}
-            onPressLesson={handlePressLesson}
-            autoPlayInterval={2500}
-          />
-        </View>
-      ))}
-    </ScrollView>
+        )}
+
+        {/* Additional Exam Pack Sections (configurable) */}
+        {otherExamPackSections.map((section) => (
+          <View key={section.id} style={styles.popularSection}>
+            <View style={styles.popularHeader}>
+              <Text style={[styles.popularTitle, { color: palette.surfaceDarkText }]}>
+                {section.title}
+              </Text>
+              <TouchableOpacity>
+                <Text style={[styles.seeAllText, { color: palette.primary }]}>See All</Text>
+              </TouchableOpacity>
+            </View>
+            <LessonCarousel
+              data={lessons}
+              favorites={favorites}
+              onToggleFavorite={toggleFavorite}
+              onPressLesson={handlePressLesson}
+              autoPlayInterval={2500}
+            />
+          </View>
+        ))}
+      </ScrollView>
+
+      <SearchScreen
+        visible={isSearchOverlayVisible}
+        topOffset={SEARCH_OVERLAY_TOP}
+        isDarkMode={isDarkMode}
+        palette={palette}
+        packResults={packResults}
+        submoduleResults={submoduleResults}
+        onDismiss={() => {
+          setSearchQuery("");
+        }}
+        onPressCourse={(course) => {
+          router.push({
+            pathname: "/lesssonPacks/SubmodulePacks",
+            params: { title: course.title, progress: String(course.progress) },
+          });
+        }}
+        onPressSubmodule={(sub) => {
+          router.push({
+            pathname: "/lesssonPacks/SubmoduleDetail",
+            params: {
+              title: sub.title,
+              description: sub.description,
+            },
+          });
+        }}
+      />
+    </View>
   );
 }
 
@@ -548,29 +515,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: Colors.light.surfaceDarkText,
-  },
-  searchOverlayRoot: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "flex-start",
-    alignItems: "center",
-    marginTop: 50,
-    zIndex: 100,
-    height: "100%",
-  },
-  searchOverlayBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  searchOverlayContent: {
-    // Align with the backdrop top so content also starts below header/search
-    marginTop: 120,
-    width: "94%",
-    borderRadius: 18,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    maxHeight: 480,
-  },
-  searchResultsScroll: {
-    paddingHorizontal: 2,
   },
   filterButton: {
     width: 50,

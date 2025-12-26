@@ -55,6 +55,7 @@ export const Colors = {
     borderSubtle: '#1f2937',
     iconMuted: '#9ca3af',
     warning: '#f59e0b',
+    greenPrimary: "#10b981",
   },
 };
 

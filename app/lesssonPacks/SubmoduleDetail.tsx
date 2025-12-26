@@ -30,6 +30,7 @@ const SubmoduleDetailScreen: React.FC = () => {
         isFavorite={false}
         onToggleFavorite={() => {}}
         onClose={() => router.back()}
+        bannerImageSource={require('../../assets/images/medisharkcourse.webp')}
       />
     </View>
   );

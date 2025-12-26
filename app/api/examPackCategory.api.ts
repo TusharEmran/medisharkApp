@@ -15,6 +15,24 @@ export type Course = {
   questionsCount: number;
 };
 
+// Multi-level mock types for hierarchical view (module -> submodule -> exams)
+export type CourseExam = {
+  id: string;
+  title: string;
+  description: string;
+};
+
+export type CourseSubmodule = {
+  id: string;
+  title: string;
+  description: string;
+};
+
+export type CourseSubmoduleNode = {
+  submodules: CourseSubmodule[];
+  exams: CourseExam[];
+};
+
 export async function getAllCourses(): Promise<Course[]> {
   // For now, return dummy data so Docs screen can render study packs
   return [
@@ -58,6 +76,135 @@ export async function getAllCourses(): Promise<Course[]> {
       questionsCount: 46,
     },
   ];
+}
+
+// Multi-level mock tree per-course for UI exploration
+// Shape is compatible with SubmodulePacks-style navigation: a map of id -> node
+export async function getCourseSubmoduleTree(
+  courseId: string,
+): Promise<Record<string, CourseSubmoduleNode>> {
+  // For now, return the same tree regardless of courseId so UI can test
+  const tree: Record<string, CourseSubmoduleNode> = {
+    root: {
+      submodules: [
+        {
+          id: 'mod-1',
+          title: 'Module 1: Chapter-wise MCQ Practice',
+          description: 'Practice modules by topics with explanations.',
+        },
+        {
+          id: 'mod-2',
+          title: 'Module 2: Full Mock Tests',
+          description: 'Simulated full-length tests.',
+        },
+        {
+          id: 'mod-3',
+          title: 'Module 3: Past Year Questions',
+          description: 'Previous years question sets.',
+        },
+      ],
+      exams: [],
+    },
+    'mod-1': {
+      submodules: [
+        {
+          id: 'mod-1-1',
+          title: 'Biology Chapters',
+          description: 'Biology chapter-wise practice.',
+        },
+        {
+          id: 'mod-1-2',
+          title: 'Chemistry Chapters',
+          description: 'Chemistry chapter-wise practice.',
+        },
+      ],
+      exams: [
+        {
+          id: 'mod-1-exam-mixed',
+          title: 'Mixed Chapter Exam',
+          description: 'Mixed chapters for quick revision.',
+        },
+      ],
+    },
+    'mod-1-1': {
+      submodules: [
+        {
+          id: 'mod-1-1-1',
+          title: 'Cell Biology',
+          description: 'MCQs on cell biology.',
+        },
+        {
+          id: 'mod-1-1-2',
+          title: 'Genetics',
+          description: 'Genetics and inheritance.',
+        },
+      ],
+      exams: [],
+    },
+    'mod-1-1-1': {
+      submodules: [
+        {
+          id: 'mod-1-1-1-1',
+          title: 'Cell Membrane',
+          description: 'Transport and membrane structure.',
+        },
+      ],
+      exams: [
+        {
+          id: 'mod-1-1-1-exam',
+          title: 'Cell Biology Exam',
+          description: 'Focused exam on cell biology topics.',
+        },
+      ],
+    },
+    'mod-1-1-1-1': {
+      submodules: [],
+      exams: [
+        {
+          id: 'mod-1-1-1-1-quiz',
+          title: 'Cell Membrane Quiz',
+          description: 'Short quiz on membrane transport.',
+        },
+      ],
+    },
+    'mod-1-1-2': {
+      submodules: [],
+      exams: [
+        {
+          id: 'gen-exam-1',
+          title: 'Genetics Practice Exam',
+          description: 'Mendelian and non-Mendelian genetics.',
+        },
+      ],
+    },
+    'mod-2': {
+      submodules: [],
+      exams: [
+        {
+          id: 'mock-1',
+          title: 'Full Mock Test 1',
+          description: 'Timed full-length mock test.',
+        },
+        {
+          id: 'mock-2',
+          title: 'Full Mock Test 2',
+          description: 'Another full-length practice exam.',
+        },
+      ],
+    },
+    'mod-3': {
+      submodules: [],
+      exams: [
+        {
+          id: 'past-2022',
+          title: '2022 Question Set',
+          description: 'Past year exam questions.',
+        },
+      ],
+    },
+  };
+
+  return tree;
 }
 
 export async function getCourseById(id: string): Promise<Course> {

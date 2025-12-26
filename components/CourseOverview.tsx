@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useTheme } from '../app/theme/ThemeContext';
 import { Colors } from '../constants/theme';
 
@@ -8,6 +9,12 @@ export interface CourseOverviewLesson {
   id: number;
   title: string;
   duration: string;
+}
+
+interface CourseOverviewExam {
+  id: number;
+  title: string;
+  meta: string;
 }
 
 export interface CourseOverviewProps {
@@ -22,12 +29,22 @@ export interface CourseOverviewProps {
   price?: string;
   lessons?: CourseOverviewLesson[];
   description?: string;
+  // Optional media at the top: banner image or video-style hero
+  bannerImageSource?: any; // e.g. require('...') or { uri: '...' }
+  hasVideoTrailer?: boolean;
+  exams?: CourseOverviewExam[];
+  onEnrollNow?: () => void;
 }
 
 const DEFAULT_LESSONS: CourseOverviewLesson[] = [
   { id: 1, title: 'Introduction to the course', duration: '04:28 min' },
   { id: 2, title: 'Understanding key concepts', duration: '06:12 min' },
   { id: 3, title: 'First practice session', duration: '43:58 min' },
+];
+
+const DEFAULT_EXAMS: CourseOverviewExam[] = [
+  { id: 1, title: 'Module Assessment 1', meta: '40 questions • 30 min • Medium' },
+  { id: 2, title: 'Final Mock Exam', meta: '80 questions • 60 min • Hard' },
 ];
 
 export const CourseOverview: React.FC<CourseOverviewProps> = ({
@@ -42,14 +59,33 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
   price = '$399',
   lessons = DEFAULT_LESSONS,
   description = 'This course will guide you through key concepts with structured lessons and practical examples so you can prepare confidently for your admission exams.',
+  bannerImageSource,
+  hasVideoTrailer = false,
+  exams = DEFAULT_EXAMS,
+  onEnrollNow,
 }) => {
+  const router = useRouter();
   const { isDarkMode } = useTheme();
   const palette = isDarkMode ? Colors.dark : Colors.light;
-  const [activeTab, setActiveTab] = useState<'lessons' | 'description'>('lessons');
+  const [activeTab, setActiveTab] = useState<'lessons' | 'description' | 'discussions' | 'exams'>('lessons');
+
+  const handleEnroll = () => {
+    if (onEnrollNow) {
+      onEnrollNow();
+      return;
+    }
+
+    router.push({
+      pathname: '/payment/payment',
+      params: {
+        title,
+      },
+    });
+  };
 
   return (
-    <View style={[styles.overlay, { backgroundColor: palette.background }] }>
-      <View style={[styles.sheet, { backgroundColor: palette.background }] }>
+    <View style={[styles.overlay, { backgroundColor: palette.background }]}>
+      <View style={[styles.sheet, { backgroundColor: palette.background }]}>
         <View style={styles.sheetHeaderRow}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Ionicons name="chevron-back" size={22} color={palette.surfaceDarkText} />
@@ -65,13 +101,27 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={[styles.heroCard, { backgroundColor: palette.cardBackground }] }>
-            <View style={[styles.heroImage, { backgroundColor: palette.accentTealSoft }] }>
-              <View style={styles.heroPlayButtonOuter}>
-                <View style={[styles.heroPlayButtonInner, { backgroundColor: palette.primary }] }>
-                  <Ionicons name="play" size={22} color={palette.accentTealSofter} />
+          <View style={[styles.heroCard, { backgroundColor: palette.cardBackground }]}>
+            <View style={[styles.heroImage, { backgroundColor: palette.accentTealSoft }]}>
+              {bannerImageSource ? (
+                <Image
+                  source={bannerImageSource}
+                  style={styles.heroBannerImage}
+                  resizeMode="cover"
+                />
+              ) : hasVideoTrailer ? (
+                <View style={styles.heroPlayButtonOuter}>
+                  <View style={[styles.heroPlayButtonInner, { backgroundColor: palette.primary }]}>
+                    <Ionicons name="play" size={22} color={palette.accentTealSofter} />
+                  </View>
                 </View>
-              </View>
+              ) : (
+                <View style={styles.heroPlayButtonOuter}>
+                  <View style={[styles.heroPlayButtonInner, { backgroundColor: palette.primary }]}>
+                    <Ionicons name="play" size={22} color={palette.accentTealSofter} />
+                  </View>
+                </View>
+              )}
             </View>
 
             <View style={styles.heroBody}>
@@ -87,7 +137,7 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
                 <View style={styles.metaDot} />
                 <View style={styles.metaItemRow}>
                   <Ionicons name="book-outline" size={14} color={palette.iconMuted} />
-                  <Text style={[styles.metaText, { color: palette.mutedText }]}> 
+                  <Text style={[styles.metaText, { color: palette.mutedText }]}>
                     {lessonsCount} lessons
                   </Text>
                 </View>
@@ -99,10 +149,14 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
               </View>
 
               <View style={styles.ctaRow}>
-                <View style={[styles.pricePill, { backgroundColor: palette.cardBackgroundSoft }] }>
+                <View style={[styles.pricePill, { backgroundColor: palette.cardBackgroundSoft }]}>
                   <Text style={[styles.priceText, { color: palette.surfaceDarkText }]}>{price}</Text>
                 </View>
-                <TouchableOpacity style={[styles.enrollButton, { backgroundColor: palette.primary }] }>
+                <TouchableOpacity
+                  style={[styles.enrollButton, { backgroundColor: palette.primary }]}
+                  activeOpacity={0.9}
+                  onPress={handleEnroll}
+                >
                   <Text style={[styles.enrollButtonText, { color: palette.accentTealSofter }]}>Enroll Now</Text>
                 </TouchableOpacity>
               </View>
@@ -147,23 +201,64 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
                 Description
               </Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.tabItem,
+                activeTab === 'discussions' && { borderBottomWidth: 2, borderBottomColor: palette.primary },
+              ]}
+              onPress={() => setActiveTab('discussions')}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === 'discussions'
+                    ? { color: palette.primary, fontWeight: '600' }
+                    : { color: palette.mutedText },
+                ]}
+              >
+                Discussions
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.tabItem,
+                activeTab === 'exams' && { borderBottomWidth: 2, borderBottomColor: palette.primary },
+              ]}
+              onPress={() => setActiveTab('exams')}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === 'exams'
+                    ? { color: palette.primary, fontWeight: '600' }
+                    : { color: palette.mutedText },
+                ]}
+              >
+                Exams
+              </Text>
+            </TouchableOpacity>
           </View>
 
-          {activeTab === 'lessons' ? (
+          {activeTab === 'lessons' && (
             lessons.map((lesson) => (
               <View key={lesson.id} style={styles.lessonRow}>
                 <View style={styles.lessonLeft}>
-                  <View style={[styles.lessonPlayCircle, { backgroundColor: palette.cardBackgroundSoft }] }>
+                  <View style={[styles.lessonPlayCircle, { backgroundColor: palette.cardBackgroundSoft }]}>
                     <Ionicons name="play" size={16} color={palette.primary} />
                   </View>
                   <View>
                     <Text
-                      style={[styles.lessonTitle, { color: palette.surfaceDarkText }]}
+                      style={[
+                        styles.lessonTitle,
+                        { color: palette.surfaceDarkText },
+                      ]}
                       numberOfLines={1}
                     >
                       {lesson.title}
                     </Text>
-                    <Text style={[styles.lessonSubtitle, { color: palette.mutedText }] }>
+                    <Text style={[styles.lessonSubtitle, { color: palette.mutedText }]}>
                       {lesson.duration}
                     </Text>
                   </View>
@@ -172,11 +267,42 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
                 <Ionicons name="chevron-forward" size={18} color={palette.iconMuted} />
               </View>
             ))
-          ) : (
+          )}
+
+          {activeTab === 'description' && (
             <View style={styles.descriptionContainer}>
               <Text style={[styles.descriptionText, { color: palette.mutedText }]}>
                 {description}
               </Text>
+            </View>
+          )}
+
+          {activeTab === 'discussions' && (
+            <View style={styles.descriptionContainer}>
+              <Text style={[styles.descriptionText, { color: palette.mutedText }]}>
+                Discussions for this course will appear here.
+              </Text>
+            </View>
+          )}
+
+          {activeTab === 'exams' && (
+            <View style={styles.descriptionContainer}>
+              {exams.map((exam) => (
+                <View key={exam.id} style={styles.examRow}>
+                  <View style={styles.examIconCircle}>
+                    <Ionicons name="document-text-outline" size={16} color={palette.primary} />
+                  </View>
+                  <View style={styles.examTextCol}>
+                    <Text style={[styles.examTitle, { color: palette.surfaceDarkText }]} numberOfLines={1}>
+                      {exam.title}
+                    </Text>
+                    <Text style={[styles.examMeta, { color: palette.mutedText }]} numberOfLines={1}>
+                      {exam.meta}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={palette.iconMuted} />
+                </View>
+              ))}
             </View>
           )}
         </ScrollView>
@@ -229,6 +355,10 @@ const styles = StyleSheet.create({
     height: 180,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  heroBannerImage: {
+    width: '100%',
+    height: '100%',
   },
   heroPlayButtonOuter: {
     width: 64,
@@ -356,6 +486,31 @@ const styles = StyleSheet.create({
   enrollButtonText: {
     fontSize: 15,
     fontWeight: '600',
+  },
+  examRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+  },
+  examIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.light.cardBackgroundSoft,
+    marginRight: 10,
+  },
+  examTextCol: {
+    flex: 1,
+  },
+  examTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  examMeta: {
+    fontSize: 12,
   },
 });
 
